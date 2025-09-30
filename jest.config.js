@@ -9,5 +9,8 @@ module.exports = {
         '!src/**/*.d.ts'
     ],
     coverageDirectory: 'coverage',
-    verbose: true
+    verbose: true,
+    moduleNameMapper: {
+        '^vscode$': '<rootDir>/tests/__mocks__/vscode.ts'
+    }
 };
