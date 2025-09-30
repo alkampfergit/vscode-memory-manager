@@ -5,7 +5,8 @@
       "Bash(npm install:*)",
       "Bash(npm test)",
       "Bash(npm run lint)",
-      "Bash(del .eslintrc.js)"
+      "Bash(del .eslintrc.js)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

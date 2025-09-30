@@ -23,6 +23,7 @@
   "homepage": "https://github.com/alkampfergit/vscode-memory-manager#readme",
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.6.0",
     "@types/vscode": "^1.104.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
@@ -33,5 +34,8 @@
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.4",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
   }
 }
