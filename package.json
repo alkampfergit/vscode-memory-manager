@@ -8,7 +8,8 @@
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "build": "npm run lint && npm run compile",
-    "test": "jest"
+    "test": "jest",
+    "package": "vsce package"
   },
   "repository": {
     "type": "git",
