@@ -19,6 +19,11 @@
   "homepage": "https://github.com/alkampfergit/vscode-memory-manager#readme",
   "devDependencies": {
     "@types/node": "^24.6.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.2"
   }
 }
