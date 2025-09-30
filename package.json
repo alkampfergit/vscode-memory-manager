@@ -1,0 +1,24 @@
+{
+  "name": "vscode-memory-manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alkampfergit/vscode-memory-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alkampfergit/vscode-memory-manager/issues"
+  },
+  "homepage": "https://github.com/alkampfergit/vscode-memory-manager#readme",
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.9.2"
+  }
+}
