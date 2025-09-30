@@ -1,4 +1,4 @@
-export function activate(context: any) {
+export function activate(_context: unknown) {
     console.log('VS Code Memory Manager extension activated');
 }
 

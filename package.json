@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint src --ext .ts",
+    "compile": "tsc -p ./",
+    "build": "npm run lint && npm run compile",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
