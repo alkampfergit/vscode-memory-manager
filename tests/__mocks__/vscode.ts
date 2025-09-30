@@ -11,11 +11,31 @@ export const workspace = {
         stat: jest.fn(),
         readDirectory: jest.fn(),
     },
-    createFileSystemWatcher: jest.fn(() => ({
-        onDidChange: jest.fn(),
-        onDidCreate: jest.fn(),
-        onDidDelete: jest.fn(),
-    })),
+    createFileSystemWatcher: jest.fn(() => {
+        const createCallback = jest.fn();
+        const changeCallback = jest.fn();
+        const deleteCallback = jest.fn();
+
+        return {
+            onDidCreate: jest.fn((handler) => {
+                createCallback.mockImplementation(handler);
+                return { dispose: jest.fn() };
+            }),
+            onDidChange: jest.fn((handler) => {
+                changeCallback.mockImplementation(handler);
+                return { dispose: jest.fn() };
+            }),
+            onDidDelete: jest.fn((handler) => {
+                deleteCallback.mockImplementation(handler);
+                return { dispose: jest.fn() };
+            }),
+            dispose: jest.fn(),
+            // Expose callbacks for testing
+            _triggerCreate: createCallback,
+            _triggerChange: changeCallback,
+            _triggerDelete: deleteCallback,
+        };
+    }),
 };
 
 export class Uri {

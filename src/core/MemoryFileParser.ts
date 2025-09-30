@@ -7,8 +7,9 @@ export interface MemoryFileFrontmatter {
     title: string;
     tags: string[];
     priority?: string | number;
-    created?: string;
-    updated?: string;
+    created?: string | Date;
+    updated?: string | Date;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any; // Allow custom fields
 }
 
@@ -101,6 +102,7 @@ export class MemoryFileParser {
     /**
      * Parses YAML content into a JavaScript object
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private static parseFrontmatter(yamlContent: string): any {
         try {
             const parsed = yaml.load(yamlContent);
@@ -125,6 +127,7 @@ export class MemoryFileParser {
     /**
      * Validates that the frontmatter contains required fields
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private static validateFrontmatter(frontmatter: any): asserts frontmatter is MemoryFileFrontmatter {
         // Check for title
         if (!frontmatter.title) {
