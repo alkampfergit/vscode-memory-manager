@@ -71,7 +71,7 @@ export async function activate(context: vscode.ExtensionContext) {
         return {};
     });
 
-    participant.iconPath = vscode.Uri.file(context.extensionPath + '/icon.png');
+    // participant.iconPath = vscode.Uri.file(context.extensionPath + '/icon.png');
 
     context.subscriptions.push(participant);
     context.subscriptions.push({ dispose: () => memoryManager.dispose() });
