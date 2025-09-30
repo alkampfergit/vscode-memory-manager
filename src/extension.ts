@@ -30,7 +30,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     // Register Copilot Chat Participant
-    const participant = vscode.chat.createChatParticipant('memory.manager', async (request, context, stream, token) => {
+    const participant = vscode.chat.createChatParticipant('memory.manager', async (request, context, stream, _token) => {
         // Check if the command is 'memory-tag'
         if (request.command === 'memory-tag') {
             try {

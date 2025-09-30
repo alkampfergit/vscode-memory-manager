@@ -8,7 +8,8 @@
       "Bash(del .eslintrc.js)",
       "Bash(ls:*)",
       "Bash(npm test:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run package:*)"
     ],
     "deny": [],
     "ask": []
