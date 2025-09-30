@@ -86,6 +86,53 @@ export class MemorySynchronizationService {
     }
 
     /**
+     * Refreshes a single file in the memory index
+     * Reads and updates the file if it exists, removes it if it doesn't
+     * @param filePath The file path to refresh
+     */
+    public async refreshFile(filePath: string): Promise<void> {
+        try {
+            // Create URI from file path
+            const uri = vscode.Uri.file(filePath);
+
+            // Try to read the file to check if it exists
+            try {
+                const fileContent = await vscode.workspace.fs.readFile(uri);
+                const content = Buffer.from(fileContent).toString('utf8');
+
+                // Parse the file
+                const parsed = MemoryFileParser.parse(content);
+
+                // Check if this file already exists in the index
+                const existingEntry = this.memoryIndex.get(filePath);
+
+                // If it exists, remove old tags first
+                if (existingEntry) {
+                    this.tagSystem.removeTags(filePath, existingEntry.frontmatter.tags);
+                }
+
+                // Add or update the entry in the memory index
+                this.memoryIndex.add(filePath, parsed.frontmatter, parsed.content);
+
+                // Add tags to the tag system
+                this.tagSystem.addTags(filePath, parsed.frontmatter.tags);
+
+            } catch {
+                // File doesn't exist or can't be read - remove from index if present
+                const entry = this.memoryIndex.get(filePath);
+                if (entry) {
+                    this.tagSystem.removeTags(filePath, entry.frontmatter.tags);
+                    this.memoryIndex.remove(filePath);
+                }
+            }
+
+        } catch (error) {
+            console.error(`Failed to refresh file ${filePath}: ${error}`);
+            // Don't throw - we want to continue processing
+        }
+    }
+
+    /**
      * Clears all synchronized data
      */
     public clear(): void {

@@ -233,6 +233,127 @@ Content.`;
         });
     });
 
+    describe('refreshFile', () => {
+        it('should refresh an existing file with new content', async () => {
+            const filePath = '/test/file.md';
+
+            // First add a file
+            (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(
+                // @ts-ignore - Mock return type
+                Buffer.from(validFileContent, 'utf8')
+            );
+
+            await service.refreshFile(filePath);
+
+            // Verify file was added
+            expect(memoryIndex.has(filePath)).toBe(true);
+            const entry1 = memoryIndex.get(filePath);
+            expect(entry1?.frontmatter.title).toBe('Test Memory');
+
+            // Now refresh with different content
+            const updatedContent = `---
+title: "Updated Memory"
+tags:
+  - "backend.database"
+  - "testing"
+  - "new.tag"
+---
+
+# Updated Content`;
+
+            (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(
+                // @ts-ignore - Mock return type
+                Buffer.from(updatedContent, 'utf8')
+            );
+
+            await service.refreshFile(filePath);
+
+            // Verify file was updated
+            const entry2 = memoryIndex.get(filePath);
+            expect(entry2?.frontmatter.title).toBe('Updated Memory');
+            expect(entry2?.frontmatter.tags).toContain('new.tag');
+
+            // Verify tags were updated
+            expect(tagSystem.queryByTag('new.tag')).toContain(filePath);
+        });
+
+        it('should add a new file if it does not exist in index', async () => {
+            const filePath = '/test/newfile.md';
+
+            (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(
+                // @ts-ignore - Mock return type
+                Buffer.from(validFileContent, 'utf8')
+            );
+
+            await service.refreshFile(filePath);
+
+            // Verify file was added
+            expect(memoryIndex.has(filePath)).toBe(true);
+            expect(tagSystem.queryByTag('backend.database')).toContain(filePath);
+        });
+
+        it('should remove file from index if it no longer exists', async () => {
+            const filePath = '/test/file.md';
+
+            // First add a file
+            (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(
+                // @ts-ignore - Mock return type
+                Buffer.from(validFileContent, 'utf8')
+            );
+
+            await service.refreshFile(filePath);
+
+            // Verify file was added
+            expect(memoryIndex.has(filePath)).toBe(true);
+            expect(tagSystem.queryByTag('backend.database')).toContain(filePath);
+
+            // Now simulate file not found
+            (vscode.workspace.fs.readFile as jest.Mock).mockRejectedValue(
+                // @ts-ignore - Mock return type
+                new Error('File not found')
+            );
+
+            await service.refreshFile(filePath);
+
+            // Verify file was removed
+            expect(memoryIndex.has(filePath)).toBe(false);
+            expect(tagSystem.queryByTag('backend.database')).not.toContain(filePath);
+        });
+
+        it('should handle invalid file content gracefully', async () => {
+            const filePath = '/test/invalid.md';
+
+            const invalidContent = `---
+title: "No tags"
+---
+
+Content.`;
+
+            (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(
+                // @ts-ignore - Mock return type
+                Buffer.from(invalidContent, 'utf8')
+            );
+
+            // Should not throw
+            await expect(service.refreshFile(filePath)).resolves.not.toThrow();
+
+            // File should not be added to index
+            expect(memoryIndex.has(filePath)).toBe(false);
+        });
+
+        it('should not throw if file does not exist and is not in index', async () => {
+            const filePath = '/test/nonexistent.md';
+
+            (vscode.workspace.fs.readFile as jest.Mock).mockRejectedValue(
+                // @ts-ignore - Mock return type
+                new Error('File not found')
+            );
+
+            // Should not throw
+            await expect(service.refreshFile(filePath)).resolves.not.toThrow();
+        });
+    });
+
     describe('clear', () => {
         it('should clear all synchronized data', async () => {
             const uri = vscode.Uri.file('/test/file.md');
