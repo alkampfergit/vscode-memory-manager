@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { MemoryIndex } from '../core/MemoryIndex';
 import { TagSystem } from '../core/TagSystem';
+import { MemoryFileParser } from '../core/MemoryFileParser';
+import * as fs from 'fs';
 
 /**
  * Retrieves and injects memory content into Copilot Chat context
@@ -94,12 +96,12 @@ export class ContentInjectionEngine {
      */
     public getMatchSummaryForTags(tagPatterns: string[]): { count: number; filePaths: string[]; tagPatterns: string[] } {
         const allFilePaths = new Set<string>();
-        
+
         for (const tagPattern of tagPatterns) {
             const filePaths = tagPattern.includes('*')
                 ? this.tagSystem.queryByWildcard(tagPattern)
                 : this.tagSystem.queryByTag(tagPattern);
-            
+
             for (const filePath of filePaths) {
                 allFilePaths.add(filePath);
             }
@@ -110,5 +112,42 @@ export class ContentInjectionEngine {
             filePaths: Array.from(allFilePaths),
             tagPatterns
         };
+    }
+
+    /**
+     * Reads memory files and extracts their content without YAML headers
+     * @param filePaths Array of file paths to read
+     * @returns Array of objects containing file path and stripped content
+     */
+    public async getMemoryContents(filePaths: string[]): Promise<Array<{ filePath: string; content: string; title: string }>> {
+        const results: Array<{ filePath: string; content: string; title: string }> = [];
+
+        for (const filePath of filePaths) {
+            try {
+                const fileContent = await fs.promises.readFile(filePath, 'utf-8');
+                const parsed = MemoryFileParser.parse(fileContent);
+
+                results.push({
+                    filePath,
+                    content: parsed.content,
+                    title: parsed.frontmatter.title
+                });
+            } catch (error) {
+                console.error(`Failed to read or parse memory file ${filePath}:`, error);
+                // Skip files that fail to parse
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Gets memory contents for files matching the given tag patterns
+     * @param tagPatterns Array of tag patterns to search for
+     * @returns Array of objects containing file path and stripped content
+     */
+    public async getMemoryContentsByTags(tagPatterns: string[]): Promise<Array<{ filePath: string; content: string; title: string }>> {
+        const summary = this.getMatchSummaryForTags(tagPatterns);
+        return this.getMemoryContents(summary.filePaths);
     }
 }

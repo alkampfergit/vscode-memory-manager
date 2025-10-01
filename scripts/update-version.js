@@ -12,9 +12,9 @@ const path = require('path');
 // Try both gitversion and dotnet gitversion commands
 function getGitVersion() {
     const commands = [
-        'gitversion /showvariable SemVer',
-        'dotnet gitversion /showvariable SemVer',
-        'dotnet-gitversion /showvariable SemVer'
+        'gitversion /showvariable FullSemVer',
+        'dotnet gitversion /showvariable FullSemVer',
+        'dotnet-gitversion /showvariable FullSemVer'
     ];
 
     for (const cmd of commands) {

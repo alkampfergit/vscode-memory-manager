@@ -1,5 +1,5 @@
-branches: {}
-ignore:
-  sha: []
-merge-message-formats: {}
 mode: ContinuousDeployment
+branches:
+  feature:
+    source-branches: ['develop']
+    increment: Patch
