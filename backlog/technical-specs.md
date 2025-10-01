@@ -6,12 +6,12 @@ Create a Visual Studio Code extension that provides a **Memory Management System
 
 - Maintain a local `Memory/` folder containing tagged markdown files as a knowledge base
 - Register as a Copilot Chat participant to intercept `#memory-tag XXX` commands
-- Parse markdown files for tag-based retrieval and inject matching content into Copilot prompts
+- Parse markdown files for tag-based retrieval and attach matching files to Copilot Chat context
 - Enable users to build and maintain project-specific knowledge that enhances Copilot responses
 
 ## Core Concept
 
-Users create markdown files in a `Memory/` folder with structured headers containing tags and metadata. When they type `#memory-tag XXX` in Copilot Chat, the extension finds all memory files tagged with "XXX" and injects their content as context for Copilot to use in generating responses.
+Users create markdown files in a `Memory/` folder with structured headers containing tags and metadata. When they type `#memory-tag XXX` on the first line in Copilot Chat, the extension finds all memory files tagged with "XXX" and attaches them to the chat context using VS Code's `github.copilot.chat.attachFile` command. The remaining lines of the prompt are passed to Copilot as the user's actual question.
 
 ## Features
 
@@ -81,11 +81,10 @@ Users create markdown files in a `Memory/` folder with structured headers contai
 - **Markdown Link Parser**: Parse standard `[text](path)` syntax to discover file references within memory content
 - **YAML Frontmatter Parser**: Extract mandatory fields (title, tags) and optional metadata from clean headers
 - **Chat Participant Integration**: VS Code Copilot Chat API integration with `#memory-tag` command processing
-- **Content Injection Engine**: Inject memory content with inline expansion of first-level linked content
-- **Link Resolution System**: Resolve first-level markdown links and append referenced content inline
-- **Link Processing Strategy**: Remove `[text](path)` syntax, keep text, append referenced file content
-- **Single-Level Reference**: Follow only direct links, do not process links within referenced content
-- **File Watcher System**: Real-time monitoring of Memory folder and referenced files for index updates
+- **Content Injection Engine**: Attach memory files to chat context using `github.copilot.chat.attachFile` command
+- **File Attachment System**: Use VS Code's native file attachment mechanism for reliable context injection
+- **Prompt Parsing**: Two-phase processing - extract tag from first line, use remaining lines as user prompt
+- **File Watcher System**: Real-time monitoring of Memory folder for index updates
 - **Memory Index Cache**: Performance-optimized in-memory index with hierarchical tag lookup
 - **Command Router**: Parse `#memory-tag` commands with intelligent tag completion
 - **IntelliSense Integration**: VS Code completion provider for tag autocompletion in Copilot Chat
@@ -115,6 +114,8 @@ See also: [Error Handling Patterns](./error-handling.md) for robust connection m
 
 ### MVP Command Set
 - `#memory-tag <tag-pattern>` - Primary command for memory retrieval with IntelliSense support
+  - First line contains the tag pattern
+  - Remaining lines contain the actual user prompt for Copilot
 
 ### IntelliSense Features
 - **Tag Autocompletion**: After typing `#memory-tag `, show available tags in completion dropdown
@@ -130,24 +131,26 @@ See also: [Error Handling Patterns](./error-handling.md) for robust connection m
 - `#memory-tag postgres` - Simple tag match with IntelliSense assistance
 
 ### Content Processing Rules
-- **Original Content**: Include full memory file content (excluding YAML frontmatter)
-- **Link Processing**: Transform `[Connection Pool Setup](./connection-pool.md)` → `Connection Pool Setup` + append file content
-- **Single-Level Resolution**: Only follow direct links in original memory files, ignore links in referenced content
-- **Content Boundaries**: No special separators - seamless inline expansion for natural reading
-- **User Content Control**: No automatic truncation or size limits - user manages content size
+- **File Attachment**: Use `github.copilot.chat.attachFile` command to attach memory files to chat context
+- **Automatic Context**: VS Code handles file content injection automatically
+- **No Manual Processing**: Memory files are attached as-is with YAML frontmatter included
+- **Multiple Files**: All matching files are attached in a single command call
+- **Prompt Separation**: Tag pattern on first line, user prompt on remaining lines
 
-### Example Content Processing
-**Original Memory File:**
-```markdown
-This pattern builds on [Connection Pool Setup](./connection-pool.md) for database management.
+### Example Usage Flow
+
+**User Input:**
+```
+#memory-tag backend.database
+How do I implement connection pooling for high-traffic scenarios?
 ```
 
-**Processed for Copilot Injection:**
-```markdown
-This pattern builds on Connection Pool Setup for database management.
-
-[Full content of connection-pool.md appended here...]
-```
+**Extension Processing:**
+1. Parse first line: tag = `backend.database`
+2. Find 3 matching memory files
+3. Execute `github.copilot.chat.attachFile` with all 3 file URIs
+4. Extract user prompt: `How do I implement connection pooling for high-traffic scenarios?`
+5. Let Copilot process the prompt with attached memory context
 
 ## Technical Approach
 
@@ -158,63 +161,46 @@ This pattern builds on Connection Pool Setup for database management.
    - In the extension's `activate` function, use the Copilot Chat API to register a participant.
    - Example:
      ```typescript
-     const participant = vscode.chat.createChatParticipant('your.extension.id', (request, context, response, token) => {
-         // Handler logic goes here
+     const participant = vscode.chat.createChatParticipant('your.extension.id', async (request, context, response, token) => {
+         if (request.command === 'memory-tag') {
+             const lines = request.prompt.split('\n');
+             const tagPattern = lines[0].trim();
+             const userPrompt = lines.slice(1).join('\n').trim();
+             
+             // Find matching memory files
+             const memoryFiles = await findMemoriesByTag(tagPattern);
+             
+             // Attach files to chat context
+             await vscode.commands.executeCommand(
+                 'github.copilot.chat.attachFile',
+                 ...memoryFiles.map(f => f.uri)
+             );
+             
+             // Let Copilot process the user prompt with attached context
+         }
      });
      context.subscriptions.push(participant);
      ```
    - This allows your extension to receive and respond to chat prompts in Copilot.
 
-3. **Trigger on `#`**
-   - In the participant handler, check if the prompt starts with `#`.
-   - If so, parse the input, decide what context to add, and modify the prompt or response as needed.
+3. **Parse Command and Prompt**
+   - In the participant handler, check if `request.command` is `memory-tag`.
+   - Split the prompt by lines: first line contains tag pattern, remaining lines are the user prompt.
    - Example:
      ```typescript
-     if (request.prompt.startsWith('#')) {
-         const userInput = request.prompt.slice(1).trim();
-         // Decide what context to inject based on userInput
-         // Optionally, modify the prompt or provide a custom response
+     if (request.command === 'memory-tag') {
+         const lines = request.prompt.split('\n');
+         const tagPattern = lines[0].trim();
+         const userPrompt = lines.slice(1).join('\n').trim();
+         // Process tag pattern and attach matching files
      }
      ```
 
-4. **Inject Context or Modify Prompt**
-   - Based on the parsed input, add relevant context or information to the Copilot prompt or response.
+4. **Attach Memory Files to Context**
+   - Find all memory files matching the tag pattern.
+   - Use `github.copilot.chat.attachFile` command to attach files.
+   - VS Code will automatically inject file contents into Copilot's context.
 
 5. **Testing**
    - Run and debug the extension in VS Code.
-   - In the Copilot Chat window, type `# your custom command` to trigger your extension logic.
-
-## Example Usage
-
-### Memory Retrieval with IntelliSense
-1. User types `#memory-tag ` in Copilot Chat
-2. Extension shows completion dropdown with available tags:
-   ```
-   ▼ backend.database.postgres (3 memories)
-   ▼ backend.auth.jwt (2 memories)  
-   ▼ frontend.components (5 memories)
-   ▼ testing.unit (1 memory)
-   ```
-3. User selects or continues typing `backend.`
-4. Extension shows hierarchical subtags:
-   ```
-   ▼ backend.database (4 memories)
-   ▼ backend.auth (3 memories)
-   ▼ backend.* (7 memories total)
-   ```
-5. User selects `backend.database` and extension injects all matching memories
-
-### Manual Memory Creation (MVP Scope)
-- Users manually create `.md` files in `Memory/` folder
-- Users manually write YAML frontmatter with title and tags
-- Extension automatically indexes new files via file watcher
-- IntelliSense immediately reflects new tags in completion suggestions
-
-## References
-
-- [GitHub Copilot Extensions: Creating a VS Code Copilot Extension]
-- [VS Code Copilot Documentation]
-
-: https://pascoal.net/2024/10/31/gh-copilot-extensions-vscode-creating-extension/
-: https://code.visualstudio.com/docs/copilot/overview
-: https://code.visualstudio.com/docs/copilot/getting-started
+   - In the Copilot Chat window, type `#memory-tag <tag>` followed by your question on subsequent lines.
