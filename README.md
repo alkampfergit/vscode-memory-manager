@@ -15,12 +15,19 @@ A Visual Studio Code extension that enables you to create, manage, and inject co
 - Visual Studio Code 1.104.0 or higher
 - Node.js and npm installed
 - `vsce` (Visual Studio Code Extensions) tool for building
+- GitVersion (for automatic versioning using GitFlow)
 
-### Installing vsce
+### Installing Required Tools
 
 ```bash
+# Install vsce
 npm install -g vsce
+
+# Install GitVersion (requires .NET runtime)
+dotnet tool install --global GitVersion.Tool
 ```
+
+> **Note**: GitVersion is optional but recommended. It automatically calculates version numbers based on your Git history and GitFlow branching strategy. See [GitVersion Setup](docs/GitVersion-Setup.md) for details.
 
 ## Building the Extension
 
@@ -36,12 +43,18 @@ npm install -g vsce
    npm run build
    ```
 
+   The version will be automatically determined from GitVersion based on your current Git branch.
+
 3. Package the extension into a `.vsix` file:
    ```bash
    npm run package
    ```
 
-   This will create a file like `vscode-memory-manager-1.0.0.vsix` in the project root.
+   This will:
+   - Automatically update the version using GitVersion
+   - Create a `.vsix` file like `vscode-memory-manager-1.2.0-alpha.5.vsix` in the project root
+
+   See [GitVersion Setup](docs/GitVersion-Setup.md) for more information on versioning.
 
 ## Installing the Extension
 
@@ -135,7 +148,8 @@ vscode-memory-manager/
 
 ## Documentation
 
-See [USER_GUIDE.md](docs/USER_GUIDE.md) for detailed documentation on creating and using memory files.
+- [USER_GUIDE.md](docs/USER_GUIDE.md) - Detailed documentation on creating and using memory files
+- [GitVersion Setup](docs/GitVersion-Setup.md) - Automatic versioning with GitFlow
 
 ## License
 
