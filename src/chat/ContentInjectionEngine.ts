@@ -2,16 +2,22 @@ import * as vscode from 'vscode';
 import { MemoryIndex } from '../core/MemoryIndex';
 import { TagSystem } from '../core/TagSystem';
 import { MemoryFileParser } from '../core/MemoryFileParser';
+import { MarkdownLinkParser } from '../core/MarkdownLinkParser';
+import { LinkResolutionService } from '../core/LinkResolutionService';
 import * as fs from 'fs';
 
 /**
  * Retrieves and injects memory content into Copilot Chat context
  */
 export class ContentInjectionEngine {
+    private linkResolver: LinkResolutionService;
+
     constructor(
         private memoryIndex: MemoryIndex,
         private tagSystem: TagSystem
-    ) {}
+    ) {
+        this.linkResolver = new LinkResolutionService();
+    }
 
     /**
      * Attaches memory files to Copilot Chat based on a tag pattern
@@ -116,8 +122,9 @@ export class ContentInjectionEngine {
 
     /**
      * Reads memory files and extracts their content without YAML headers
+     * Also resolves and processes Markdown links in the content
      * @param filePaths Array of file paths to read
-     * @returns Array of objects containing file path and stripped content
+     * @returns Array of objects containing file path and processed content
      */
     public async getMemoryContents(filePaths: string[]): Promise<Array<{ filePath: string; content: string; title: string }>> {
         const results: Array<{ filePath: string; content: string; title: string }> = [];
@@ -127,9 +134,12 @@ export class ContentInjectionEngine {
                 const fileContent = await fs.promises.readFile(filePath, 'utf-8');
                 const parsed = MemoryFileParser.parse(fileContent);
 
+                // Process links in the content
+                const processedContent = await this.processLinksInContent(filePath, parsed.content);
+
                 results.push({
                     filePath,
-                    content: parsed.content,
+                    content: processedContent,
                     title: parsed.frontmatter.title
                 });
             } catch (error) {
@@ -139,6 +149,49 @@ export class ContentInjectionEngine {
         }
 
         return results;
+    }
+
+    /**
+     * Processes Markdown links in content: replaces links with text and appends linked content
+     * @param baseFilePath The path of the file containing the links
+     * @param content The content to process
+     * @returns Processed content with links replaced and linked content appended
+     */
+    private async processLinksInContent(baseFilePath: string, content: string): Promise<string> {
+        // Parse all links from the content
+        const links = MarkdownLinkParser.parse(content);
+
+        if (links.length === 0) {
+            return content;
+        }
+
+        // Resolve all links
+        const resolvedLinks = await this.linkResolver.resolveLinks(baseFilePath, links);
+
+        // Replace links with their text (in reverse order to maintain indices)
+        let processedContent = content;
+        const sortedLinks = [...links].sort((a, b) => b.startIndex - a.startIndex);
+
+        for (const link of sortedLinks) {
+            const before = processedContent.substring(0, link.startIndex);
+            const after = processedContent.substring(link.endIndex);
+            processedContent = before + link.text + after;
+        }
+
+        // Append content from resolved links
+        const linkedContents: string[] = [];
+
+        for (const [linkPath, resolved] of resolvedLinks.entries()) {
+            if (resolved.content) {
+                linkedContents.push(`\n\n---\n\n**Linked Content from: ${linkPath}**\n\n${resolved.content}`);
+            }
+        }
+
+        if (linkedContents.length > 0) {
+            processedContent += linkedContents.join('');
+        }
+
+        return processedContent;
     }
 
     /**
