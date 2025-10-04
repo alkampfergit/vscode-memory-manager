@@ -2,11 +2,13 @@
 
 All the general technical specification are contained here [technical-specifications.md](../backlog/technical-specs.md). 
 When you need to run scripts prefer powershell core that can work both in windows and unix systems.
+All features are contained into backlog/Features folder. Features are ordered, each feature contains a series of sub tasks to implement the feature. 
 
 # MUST TO FOLLOW RULES
 
 - After each task ensure that all the tests are passing
 - Always try to write tests for each new piece of code so we have all code testable.
+- If you change the code outside the feature you are working on, always check the ./backlog/Features folder to understand if you need to update the feature reflecting the new changes
 
 ## Implementation rules
 

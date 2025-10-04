@@ -2,9 +2,11 @@ import * as vscode from 'vscode';
 import { MemoryManagerService } from './core/MemoryManagerService';
 import { CommandRouter } from './chat/CommandRouter';
 import { ContentInjectionEngine } from './chat/ContentInjectionEngine';
+import { TagCompletionProvider } from './chat/TagCompletionProvider';
 
 let memoryManager: MemoryManagerService;
 let contentInjector: ContentInjectionEngine;
+let tagCompletionProvider: TagCompletionProvider;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log('VS Code Memory Manager extension activated');
@@ -17,6 +19,21 @@ export async function activate(context: vscode.ExtensionContext) {
         memoryManager.getMemoryIndex(),
         memoryManager.getTagSystem()
     );
+
+    // Initialize tag completion provider
+    tagCompletionProvider = new TagCompletionProvider(
+        memoryManager.getTagSystem(),
+        memoryManager.getMemoryIndex()
+    );
+
+    // Register completion provider for chat input
+    const completionProvider = vscode.languages.registerCompletionItemProvider(
+        { scheme: 'vscode-chat', language: '*' },
+        tagCompletionProvider,
+        ' ', // Trigger on space after command
+        '.' // Trigger on dot for hierarchical navigation
+    );
+    context.subscriptions.push(completionProvider);
 
     // Start watching memory files
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -42,6 +59,9 @@ export async function activate(context: vscode.ExtensionContext) {
                     stream.markdown('Please specify tag patterns on the first line.\n\nExample:\n```\n@memory /memory-tag backend.database\nHow do I implement connection pooling?\n```');
                     return {};
                 }
+
+                // Track recent tags for completion suggestions
+                tags.forEach(tag => tagCompletionProvider.addRecentTag(tag));
 
                 // Get summary of matches for all tags
                 const summary = contentInjector.getMatchSummaryForTags(tags);
