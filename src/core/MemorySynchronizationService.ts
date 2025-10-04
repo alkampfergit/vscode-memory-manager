@@ -2,15 +2,20 @@ import * as vscode from 'vscode';
 import { MemoryFileParser } from './MemoryFileParser';
 import { MemoryIndex } from './MemoryIndex';
 import { TagSystem } from './TagSystem';
+import { ErrorReporter } from './ErrorReporter';
 
 /**
  * Service for synchronizing the in-memory index with file system changes
  */
 export class MemorySynchronizationService {
+    private errorReporter: ErrorReporter;
+
     constructor(
         private memoryIndex: MemoryIndex,
         private tagSystem: TagSystem
-    ) {}
+    ) {
+        this.errorReporter = ErrorReporter.getInstance();
+    }
 
     /**
      * Handles file creation or update events
@@ -44,7 +49,12 @@ export class MemorySynchronizationService {
             this.tagSystem.addTags(filePath, parsed.frontmatter.tags);
 
         } catch (error) {
-            console.error(`Failed to process file ${uri.fsPath}: ${error}`);
+            // Non-intrusive error reporting - no modal dialogs
+            this.errorReporter.reportError(
+                'Failed to process memory file',
+                uri.fsPath,
+                error instanceof Error ? error.message : String(error)
+            );
             // Don't throw - we want to continue processing other files
         }
     }
@@ -70,7 +80,12 @@ export class MemorySynchronizationService {
             }
 
         } catch (error) {
-            console.error(`Failed to handle file deletion for ${uri.fsPath}: ${error}`);
+            // Non-intrusive error reporting - no modal dialogs
+            this.errorReporter.reportError(
+                'Failed to handle file deletion',
+                uri.fsPath,
+                error instanceof Error ? error.message : String(error)
+            );
             // Don't throw - we want to continue processing other files
         }
     }
@@ -127,7 +142,12 @@ export class MemorySynchronizationService {
             }
 
         } catch (error) {
-            console.error(`Failed to refresh file ${filePath}: ${error}`);
+            // Non-intrusive error reporting - no modal dialogs
+            this.errorReporter.reportError(
+                'Failed to refresh memory file',
+                filePath,
+                error instanceof Error ? error.message : String(error)
+            );
             // Don't throw - we want to continue processing
         }
     }

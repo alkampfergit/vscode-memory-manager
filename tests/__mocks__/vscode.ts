@@ -1,7 +1,45 @@
+export class OutputChannel {
+    public name: string;
+    private lines: string[] = [];
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    append(value: string): void {
+        this.lines.push(value);
+    }
+
+    appendLine(value: string): void {
+        this.lines.push(value + '\n');
+    }
+
+    clear(): void {
+        this.lines = [];
+    }
+
+    show(preserveFocus?: boolean): void {
+        // Mock implementation - does nothing in tests
+    }
+
+    hide(): void {
+        // Mock implementation
+    }
+
+    dispose(): void {
+        this.lines = [];
+    }
+
+    getLines(): string[] {
+        return [...this.lines];
+    }
+}
+
 export const window = {
     showInformationMessage: jest.fn(),
     showWarningMessage: jest.fn(),
     showErrorMessage: jest.fn(),
+    createOutputChannel: jest.fn((name: string) => new OutputChannel(name)),
 };
 
 export const workspace = {
