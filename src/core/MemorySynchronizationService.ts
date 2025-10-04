@@ -1,20 +1,23 @@
 import * as vscode from 'vscode';
-import { MemoryFileParser } from './MemoryFileParser';
+import { MemoryFileParser, FrontmatterValidationError, FrontmatterParseError } from './MemoryFileParser';
 import { MemoryIndex } from './MemoryIndex';
 import { TagSystem } from './TagSystem';
 import { ErrorReporter } from './ErrorReporter';
+import { DiagnosticReporter } from './DiagnosticReporter';
 
 /**
  * Service for synchronizing the in-memory index with file system changes
  */
 export class MemorySynchronizationService {
     private errorReporter: ErrorReporter;
+    private diagnosticReporter: DiagnosticReporter;
 
     constructor(
         private memoryIndex: MemoryIndex,
         private tagSystem: TagSystem
     ) {
         this.errorReporter = ErrorReporter.getInstance();
+        this.diagnosticReporter = DiagnosticReporter.getInstance();
     }
 
     /**
@@ -48,13 +51,40 @@ export class MemorySynchronizationService {
             // Add tags to the tag system
             this.tagSystem.addTags(filePath, parsed.frontmatter.tags);
 
+            // Clear any previous diagnostics for this file (it's now valid)
+            this.diagnosticReporter.clearDiagnostics(filePath);
+
         } catch (error) {
-            // Non-intrusive error reporting - no modal dialogs
-            this.errorReporter.reportError(
-                'Failed to process memory file',
-                uri.fsPath,
-                error instanceof Error ? error.message : String(error)
-            );
+            // Report to Problems Panel with detailed validation errors
+            if (error instanceof FrontmatterValidationError) {
+                // Validation error - show in Problems Panel
+                this.diagnosticReporter.reportValidationError(uri.fsPath, error.message, 0);
+                this.errorReporter.reportError(
+                    'YAML validation failed',
+                    uri.fsPath,
+                    error.message
+                );
+            } else if (error instanceof FrontmatterParseError) {
+                // Parse error - show in Problems Panel
+                this.diagnosticReporter.reportYAMLError(uri.fsPath, error, 0);
+                this.errorReporter.reportError(
+                    'YAML parsing failed',
+                    uri.fsPath,
+                    error.message
+                );
+            } else {
+                // Other errors
+                this.diagnosticReporter.reportValidationError(
+                    uri.fsPath,
+                    error instanceof Error ? error.message : String(error),
+                    0
+                );
+                this.errorReporter.reportError(
+                    'Failed to process memory file',
+                    uri.fsPath,
+                    error instanceof Error ? error.message : String(error)
+                );
+            }
             // Don't throw - we want to continue processing other files
         }
     }
@@ -78,6 +108,9 @@ export class MemorySynchronizationService {
                 // Remove from memory index
                 this.memoryIndex.remove(filePath);
             }
+
+            // Clear diagnostics for deleted file
+            this.diagnosticReporter.clearDiagnostics(filePath);
 
         } catch (error) {
             // Non-intrusive error reporting - no modal dialogs

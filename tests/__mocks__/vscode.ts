@@ -89,12 +89,18 @@ export class RelativePattern {
 }
 
 export class Range {
+    public start: Position;
+    public end: Position;
+
     constructor(
-        public startLine: number,
-        public startCharacter: number,
-        public endLine: number,
-        public endCharacter: number
-    ) {}
+        startLine: number,
+        startCharacter: number,
+        endLine: number,
+        endCharacter: number
+    ) {
+        this.start = new Position(startLine, startCharacter);
+        this.end = new Position(endLine, endCharacter);
+    }
 }
 
 export class Position {
@@ -141,3 +147,55 @@ export class CompletionItem {
 export class MarkdownString {
     constructor(public value?: string) {}
 }
+
+export class Diagnostic {
+    constructor(
+        public range: Range,
+        public message: string,
+        public severity?: DiagnosticSeverity
+    ) {}
+    public source?: string;
+}
+
+export enum DiagnosticSeverity {
+    Error = 0,
+    Warning = 1,
+    Information = 2,
+    Hint = 3,
+}
+
+export class DiagnosticCollection {
+    private diagnostics: Map<string, Diagnostic[]> = new Map();
+
+    constructor(public name: string) {}
+
+    set(uri: Uri, diagnostics: Diagnostic[]): void {
+        this.diagnostics.set(uri.fsPath, diagnostics);
+    }
+
+    delete(uri: Uri): void {
+        this.diagnostics.delete(uri.fsPath);
+    }
+
+    clear(): void {
+        this.diagnostics.clear();
+    }
+
+    get(uri: Uri): Diagnostic[] | undefined {
+        return this.diagnostics.get(uri.fsPath);
+    }
+
+    forEach(callback: (uri: Uri, diagnostics: Diagnostic[]) => void): void {
+        this.diagnostics.forEach((diagnostics, fsPath) => {
+            callback(Uri.file(fsPath), diagnostics);
+        });
+    }
+
+    dispose(): void {
+        this.diagnostics.clear();
+    }
+}
+
+export const languages = {
+    createDiagnosticCollection: jest.fn((name: string) => new DiagnosticCollection(name)),
+};
