@@ -40,6 +40,9 @@ export const window = {
     showWarningMessage: jest.fn(),
     showErrorMessage: jest.fn(),
     createOutputChannel: jest.fn((name: string) => new OutputChannel(name)),
+    createStatusBarItem: jest.fn((alignment?: StatusBarAlignment, priority?: number) => {
+        return new StatusBarItem(alignment || StatusBarAlignment.Left, priority || 0);
+    }),
 };
 
 export const workspace = {
@@ -198,4 +201,46 @@ export class DiagnosticCollection {
 
 export const languages = {
     createDiagnosticCollection: jest.fn((name: string) => new DiagnosticCollection(name)),
+};
+
+export enum StatusBarAlignment {
+    Left = 1,
+    Right = 2,
+}
+
+export class ThemeColor {
+    constructor(public id: string) {}
+}
+
+export class StatusBarItem {
+    public text: string = '';
+    public tooltip?: string;
+    public command?: string;
+    public backgroundColor?: ThemeColor;
+    public alignment: StatusBarAlignment;
+    public priority: number;
+
+    constructor(alignment: StatusBarAlignment, priority: number) {
+        this.alignment = alignment;
+        this.priority = priority;
+    }
+
+    show(): void {
+        // Mock implementation
+    }
+
+    hide(): void {
+        // Mock implementation
+    }
+
+    dispose(): void {
+        // Mock implementation
+    }
+}
+
+export const commands = {
+    registerCommand: jest.fn((command: string, callback: (...args: any[]) => any) => {
+        return { dispose: jest.fn() };
+    }),
+    executeCommand: jest.fn(),
 };

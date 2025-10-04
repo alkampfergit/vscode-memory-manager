@@ -3,10 +3,13 @@ import { MemoryManagerService } from './core/MemoryManagerService';
 import { CommandRouter } from './chat/CommandRouter';
 import { ContentInjectionEngine } from './chat/ContentInjectionEngine';
 import { TagCompletionProvider } from './chat/TagCompletionProvider';
+import { StatusBarManager } from './core/StatusBarManager';
+import { ErrorReporter } from './core/ErrorReporter';
 
 let memoryManager: MemoryManagerService;
 let contentInjector: ContentInjectionEngine;
 let tagCompletionProvider: TagCompletionProvider;
+let statusBarManager: StatusBarManager;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log('VS Code Memory Manager extension activated');
@@ -34,6 +37,18 @@ export async function activate(context: vscode.ExtensionContext) {
         '.' // Trigger on dot for hierarchical navigation
     );
     context.subscriptions.push(completionProvider);
+
+    // Initialize status bar manager
+    statusBarManager = StatusBarManager.getInstance();
+    statusBarManager.setMemoryIndex(memoryManager.getMemoryIndex());
+    statusBarManager.setErrorReporter(ErrorReporter.getInstance());
+    context.subscriptions.push(statusBarManager.getStatusBarItem());
+
+    // Register command to show output channel
+    const showOutputCommand = vscode.commands.registerCommand('memoryManager.showOutput', () => {
+        ErrorReporter.getInstance().showOutputChannel(false);
+    });
+    context.subscriptions.push(showOutputCommand);
 
     // Start watching memory files
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];

@@ -3,6 +3,7 @@ import { FileWatcherSystem } from './FileWatcherSystem';
 import { MemorySynchronizationService } from './MemorySynchronizationService';
 import { MemoryIndex } from './MemoryIndex';
 import { TagSystem } from './TagSystem';
+import { StatusBarManager } from './StatusBarManager';
 
 /**
  * Main service that integrates file watching with memory synchronization
@@ -13,12 +14,14 @@ export class MemoryManagerService {
     private syncService: MemorySynchronizationService;
     private memoryIndex: MemoryIndex;
     private tagSystem: TagSystem;
+    private statusBarManager: StatusBarManager;
 
     constructor() {
         this.memoryIndex = new MemoryIndex();
         this.tagSystem = new TagSystem();
         this.syncService = new MemorySynchronizationService(this.memoryIndex, this.tagSystem);
         this.fileWatcher = new FileWatcherSystem();
+        this.statusBarManager = StatusBarManager.getInstance();
     }
 
     /**
@@ -27,18 +30,21 @@ export class MemoryManagerService {
      */
     public start(memoryFolderPattern: string): void {
         // Register handlers for file events
-        this.fileWatcher.onFileCreated((uri) => {
-            this.syncService.handleFileCreateOrChange(uri);
+        this.fileWatcher.onFileCreated(async (uri) => {
+            await this.syncService.handleFileCreateOrChange(uri);
+            this.statusBarManager.updateStatusBar();
         });
 
         // When a file changes, use refreshFile for silent recovery
         // This automatically handles files that transition from invalid to valid
-        this.fileWatcher.onFileChanged((uri) => {
-            this.syncService.refreshFile(uri.fsPath);
+        this.fileWatcher.onFileChanged(async (uri) => {
+            await this.syncService.refreshFile(uri.fsPath);
+            this.statusBarManager.updateStatusBar();
         });
 
         this.fileWatcher.onFileDeleted((uri) => {
             this.syncService.handleFileDelete(uri);
+            this.statusBarManager.updateStatusBar();
         });
 
         // Start watching
