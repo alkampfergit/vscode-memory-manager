@@ -203,4 +203,31 @@ export class ContentInjectionEngine {
         const summary = this.getMatchSummaryForTags(tagPatterns);
         return this.getMemoryContents(summary.filePaths);
     }
+
+    /**
+     * Assembles memory contents into a clean, cohesive text block
+     * Uses simple double newline separators without any headers or metadata
+     * Per Feature 7, Story 2: Clean content assembly for seamless context
+     *
+     * @param memoryContents Array of memory content objects
+     * @returns A single string with all contents joined by double newlines
+     */
+    public assembleCleanContent(memoryContents: Array<{ filePath: string; content: string; title: string }>): string {
+        if (memoryContents.length === 0) {
+            return '';
+        }
+
+        // Join content with simple double newline - no headers, separators, or metadata
+        return memoryContents.map(memory => memory.content).join('\n\n');
+    }
+
+    /**
+     * Gets memory contents and assembles them into a clean text block
+     * @param tagPatterns Array of tag patterns to search for
+     * @returns A single string with all matched memory contents
+     */
+    public async getAssembledContent(tagPatterns: string[]): Promise<string> {
+        const memoryContents = await this.getMemoryContentsByTags(tagPatterns);
+        return this.assembleCleanContent(memoryContents);
+    }
 }
