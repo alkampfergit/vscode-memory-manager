@@ -75,7 +75,8 @@ describe('Feature 8, Story 4: Error Reporting Mechanisms', () => {
                 statusBarManager.updateStatusBar();
 
                 const statusBarItem = statusBarManager.getStatusBarItem();
-                expect(statusBarItem.text).toContain('$(database)');
+                // Feature 9, Story 3: Shows checkmark when healthy (files indexed, no errors)
+                expect(statusBarItem.text).toContain('$(check)');
             });
 
             it('should show error icon when errors are present', () => {
@@ -83,7 +84,8 @@ describe('Feature 8, Story 4: Error Reporting Mechanisms', () => {
                 statusBarManager.updateStatusBar();
 
                 const statusBarItem = statusBarManager.getStatusBarItem();
-                expect(statusBarItem.text).toContain('$(error)');
+                // Feature 9, Story 3: Shows warning icon when errors present
+                expect(statusBarItem.text).toContain('$(warning)');
             });
 
             it('should show error count when errors present', () => {
@@ -124,7 +126,8 @@ describe('Feature 8, Story 4: Error Reporting Mechanisms', () => {
                 statusBarManager.updateStatusBar();
 
                 const statusBarItem = statusBarManager.getStatusBarItem();
-                expect(statusBarItem.tooltip).toContain('1 errors');
+                // Feature 9, Story 3: Updated tooltip format
+                expect(statusBarItem.tooltip).toContain('1 parsing/indexing errors');
             });
 
             it('should instruct user to click to view output', () => {
@@ -284,7 +287,8 @@ describe('Feature 8, Story 4: Error Reporting Mechanisms', () => {
 
             // Verify in Status Bar
             const statusBarItem = statusBarManager.getStatusBarItem();
-            expect(statusBarItem.text).toContain('$(error)');
+            // Feature 9, Story 3: Now uses warning icon instead of error
+            expect(statusBarItem.text).toContain('$(warning)');
         });
 
         it('should provide comprehensive error visibility', () => {
