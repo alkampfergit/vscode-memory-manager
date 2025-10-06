@@ -193,4 +193,9 @@ export async function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
     const logger = Logger.getInstance();
     logger.info('VS Code Memory Manager extension deactivated');
+
+    // Feature 10, Story 5: Proper resource cleanup to prevent memory leaks
+    if (memoryManager) {
+        memoryManager.dispose();
+    }
 }

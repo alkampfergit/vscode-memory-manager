@@ -10,6 +10,11 @@ interface TagNode {
 
 /**
  * Hierarchical tag system for managing and querying tags
+ *
+ * Feature 10, Story 5: Resource Efficiency
+ * - Uses lazy loading: tag tree is built incrementally as tags are added
+ * - Efficient data structures (Map, Set) for O(1) lookups
+ * - Proper cleanup via clear() method to prevent memory leaks
  */
 export class TagSystem {
     private root: TagNode;
