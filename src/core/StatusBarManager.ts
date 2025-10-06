@@ -6,6 +6,7 @@ import { ErrorReporter } from './ErrorReporter';
  * Manages the status bar item for the Memory Manager extension
  * Shows the number of indexed memories and error status
  * Per Feature 8, Story 4: Status bar provides high-level status
+ * Per Feature 9, Story 3: Memory Health Status Indicator
  */
 export class StatusBarManager {
     private static instance: StatusBarManager;
@@ -52,6 +53,7 @@ export class StatusBarManager {
 
     /**
      * Updates the status bar to show current status
+     * Feature 9, Story 3: Shows health status with appropriate icon
      */
     public updateStatusBar(): void {
         const memoryCount = this.memoryIndex?.size() || 0;
@@ -59,14 +61,19 @@ export class StatusBarManager {
         this.hasErrors = errorCount > 0;
 
         if (this.hasErrors) {
-            // Show error icon when errors are present
-            this.statusBarItem.text = `$(error) Memory: ${memoryCount} files, ${errorCount} errors`;
-            this.statusBarItem.tooltip = `Memory Manager: ${memoryCount} indexed memories, ${errorCount} errors. Click to view output.`;
+            // Show warning/error icon when errors are present
+            this.statusBarItem.text = `$(warning) Memory: ${memoryCount} files, ${errorCount} errors`;
+            this.statusBarItem.tooltip = `Memory Manager Status: ⚠️ Unhealthy\n${memoryCount} indexed memories\n${errorCount} parsing/indexing errors\n\nClick to view detailed error output.`;
             this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+        } else if (memoryCount > 0) {
+            // Show positive status (checkmark) when system is healthy and has indexed files
+            this.statusBarItem.text = `$(check) Memory: ${memoryCount}`;
+            this.statusBarItem.tooltip = `Memory Manager Status: ✅ Healthy\n${memoryCount} indexed memories\nAll files parsed successfully\n\nClick to view output.`;
+            this.statusBarItem.backgroundColor = undefined;
         } else {
-            // Show normal status when no errors
-            this.statusBarItem.text = `$(database) Memory: ${memoryCount}`;
-            this.statusBarItem.tooltip = `Memory Manager: ${memoryCount} indexed memories. Click to view output.`;
+            // Show database icon when no files are indexed yet
+            this.statusBarItem.text = `$(database) Memory: 0`;
+            this.statusBarItem.tooltip = `Memory Manager Status: No memories indexed yet\n\nCreate .md files in the Memory/ folder with YAML frontmatter tags.\n\nClick to view output.`;
             this.statusBarItem.backgroundColor = undefined;
         }
     }

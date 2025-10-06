@@ -4,6 +4,7 @@ import { TagSystem } from '../core/TagSystem';
 import { MemoryFileParser } from '../core/MemoryFileParser';
 import { MarkdownLinkParser } from '../core/MarkdownLinkParser';
 import { LinkResolutionService } from '../core/LinkResolutionService';
+import { Logger } from '../core/Logger';
 import * as fs from 'fs';
 
 /**
@@ -143,7 +144,7 @@ export class ContentInjectionEngine {
                     title: parsed.frontmatter.title
                 });
             } catch (error) {
-                console.error(`Failed to read or parse memory file ${filePath}:`, error);
+                Logger.getInstance().error(`Failed to read or parse memory file ${filePath}`, error);
                 // Skip files that fail to parse
             }
         }

@@ -5,14 +5,18 @@ import { ContentInjectionEngine } from './chat/ContentInjectionEngine';
 import { TagCompletionProvider } from './chat/TagCompletionProvider';
 import { StatusBarManager } from './core/StatusBarManager';
 import { ErrorReporter } from './core/ErrorReporter';
+import { MemoryInspectionCommands } from './core/MemoryInspectionCommands';
+import { Logger } from './core/Logger';
 
 let memoryManager: MemoryManagerService;
 let contentInjector: ContentInjectionEngine;
 let tagCompletionProvider: TagCompletionProvider;
 let statusBarManager: StatusBarManager;
+let inspectionCommands: MemoryInspectionCommands;
 
 export async function activate(context: vscode.ExtensionContext) {
-    console.log('VS Code Memory Manager extension activated');
+    const logger = Logger.getInstance();
+    logger.info('VS Code Memory Manager extension activated');
 
     // Initialize memory manager service
     memoryManager = new MemoryManagerService();
@@ -49,6 +53,14 @@ export async function activate(context: vscode.ExtensionContext) {
         ErrorReporter.getInstance().showOutputChannel(false);
     });
     context.subscriptions.push(showOutputCommand);
+
+    // Register memory inspection commands (Feature 9, Story 1)
+    inspectionCommands = new MemoryInspectionCommands(
+        memoryManager,
+        memoryManager.getMemoryIndex(),
+        memoryManager.getTagSystem()
+    );
+    inspectionCommands.registerCommands(context);
 
     // Start watching memory files
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -126,7 +138,7 @@ export async function activate(context: vscode.ExtensionContext) {
                                 queryWithMemories
                             );
                         } catch (error) {
-                            console.error('Failed to open chat:', error);
+                            Logger.getInstance().error('Failed to open chat', error);
                         }
                     }, 500);
 
@@ -179,5 +191,6 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-    console.log('VS Code Memory Manager extension deactivated');
+    const logger = Logger.getInstance();
+    logger.info('VS Code Memory Manager extension deactivated');
 }

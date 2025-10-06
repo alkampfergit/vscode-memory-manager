@@ -63,7 +63,6 @@ export class TagCompletionProvider implements vscode.CompletionItemProvider {
      * Gets hierarchical completions for tags with a dot separator
      */
     private getHierarchicalCompletions(prefix: string, allTags: string[]): vscode.CompletionItem[] {
-        const prefixParts = prefix.split('.');
         const completions: vscode.CompletionItem[] = [];
         const seenSubtags = new Set<string>();
 
