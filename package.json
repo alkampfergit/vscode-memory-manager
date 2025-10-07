@@ -1,7 +1,7 @@
 {
   "name": "vscode-memory-manager",
   "displayName": "Memory Manager",
-  "version": "0.0.2-feature5.1+14",
+  "version": "0.0.2-feature5.1+15",
   "description": "Manage and inject contextual knowledge into GitHub Copilot Chat using hierarchical tags",
   "publisher": "memory-manager",
   "engines": {
@@ -54,7 +54,7 @@
     "version": "node scripts/show-version.js",
     "update-version": "node scripts/update-version.js",
     "prebuild": "npm run update-version",
-    "build": "npm run lint && npm run compile",
+    "build": "npm run lint && npm run compile && vsce package",
     "prepackage": "npm run update-version",
     "package": "vsce package",
     "test": "jest"
@@ -77,6 +77,7 @@
     "@types/vscode": "^1.104.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
+    "@vscode/vsce": "^3.6.2",
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
     "jest": "^30.2.0",
