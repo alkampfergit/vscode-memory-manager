@@ -38,23 +38,22 @@ dotnet tool install --global GitVersion.Tool
    npm install
    ```
 
-2. Build the extension:
+2. Build and package the extension:
    ```bash
    npm run build
    ```
 
-   The version will be automatically determined from GitVersion based on your current Git branch.
-
-3. Package the extension into a `.vsix` file:
-   ```bash
-   npm run package
-   ```
-
    This will:
+   - Run the linter to check code quality
+   - Compile TypeScript code
    - Automatically update the version using GitVersion
    - Create a `.vsix` file like `vscode-memory-manager-1.2.0-alpha.5.vsix` in the project root
 
+   The version will be automatically determined from GitVersion based on your current Git branch.
+
    See [GitVersion Setup](docs/GitVersion-Setup.md) for more information on versioning.
+
+   **Note:** You can also run `npm run package` separately if you only want to create the `.vsix` file without running lint and compile again.
 
 ## Installing the Extension
 
