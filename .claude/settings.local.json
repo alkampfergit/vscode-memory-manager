@@ -13,7 +13,9 @@
       "Bash(dotnet gitversion:*)",
       "Bash(gitversion /version)",
       "Bash(node:*)",
-      "Bash(npm run compile:*)"
+      "Bash(npm run compile:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": [],
     "ask": []
