@@ -15,12 +15,19 @@ A Visual Studio Code extension that enables you to create, manage, and inject co
 - Visual Studio Code 1.104.0 or higher
 - Node.js and npm installed
 - `vsce` (Visual Studio Code Extensions) tool for building
+- GitVersion (for automatic versioning using GitFlow)
 
-### Installing vsce
+### Installing Required Tools
 
 ```bash
+# Install vsce
 npm install -g vsce
+
+# Install GitVersion (requires .NET runtime)
+dotnet tool install --global GitVersion.Tool
 ```
+
+> **Note**: GitVersion is optional but recommended. It automatically calculates version numbers based on your Git history and GitFlow branching strategy. See [GitVersion Setup](docs/GitVersion-Setup.md) for details.
 
 ## Building the Extension
 
@@ -31,17 +38,22 @@ npm install -g vsce
    npm install
    ```
 
-2. Build the extension:
+2. Build and package the extension:
    ```bash
    npm run build
    ```
 
-3. Package the extension into a `.vsix` file:
-   ```bash
-   npm run package
-   ```
+   This will:
+   - Run the linter to check code quality
+   - Compile TypeScript code
+   - Automatically update the version using GitVersion
+   - Create a `.vsix` file like `vscode-memory-manager-1.2.0-alpha.5.vsix` in the project root
 
-   This will create a file like `vscode-memory-manager-1.0.0.vsix` in the project root.
+   The version will be automatically determined from GitVersion based on your current Git branch.
+
+   See [GitVersion Setup](docs/GitVersion-Setup.md) for more information on versioning.
+
+   **Note:** You can also run `npm run package` separately if you only want to create the `.vsix` file without running lint and compile again.
 
 ## Installing the Extension
 
@@ -135,7 +147,8 @@ vscode-memory-manager/
 
 ## Documentation
 
-See [USER_GUIDE.md](docs/USER_GUIDE.md) for detailed documentation on creating and using memory files.
+- [USER_GUIDE.md](docs/USER_GUIDE.md) - Detailed documentation on creating and using memory files
+- [GitVersion Setup](docs/GitVersion-Setup.md) - Automatic versioning with GitFlow
 
 ## License
 

@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - release/**
+      - develop
+      - feature/**
+      - hotfix/**
+  pull_request:
+    branches:
+      - develop
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # GitVersion requires full history to calculate versions reliably
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Install GitVersion
+        run: dotnet tool install --global GitVersion.Tool
+
+      - name: Add dotnet tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Verify GitVersion installation and run it (safe)
+        run: |
+          echo "PATH: $PATH"
+          echo "Checking for GitVersion executable and attempting to run it (non-fatal)"
+          # Prefer dotnet-gitversion shim, but fall back to gitversion if present
+          if command -v dotnet-gitversion >/dev/null 2>&1; then
+            echo "Found dotnet-gitversion at $(command -v dotnet-gitversion)"
+            # Try common version/help flags; if none work, run the tool without flags.
+            # Ensure the step doesn't fail the job if the tool returns a non-zero exit.
+            dotnet-gitversion --version 2>/dev/null || \
+              dotnet-gitversion -v 2>/dev/null || \
+              dotnet-gitversion --help 2>/dev/null || \
+              dotnet-gitversion 2>/dev/null || \
+              echo "dotnet-gitversion executed but returned non-zero or produced no version output"
+          elif command -v gitversion >/dev/null 2>&1; then
+            echo "Found gitversion at $(command -v gitversion)"
+            gitversion --version 2>/dev/null || \
+              gitversion -v 2>/dev/null || \
+              gitversion --help 2>/dev/null || \
+              gitversion 2>/dev/null || \
+              echo "gitversion executed but returned non-zero or produced no version output"
+          else
+            echo "ERROR: GitVersion executable not found in PATH"
+            ls -la $HOME/.dotnet/tools/ || true
+            exit 1
+          fi
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-memory-manager-vsix
+          path: '*.vsix'
+          if-no-files-found: error

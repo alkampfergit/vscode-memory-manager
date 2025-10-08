@@ -1,6 +1,5 @@
 # Node.js dependencies and package manager files
 node_modules/
-package-lock.json
 yarn.lock
 
 # TypeScript compilation output

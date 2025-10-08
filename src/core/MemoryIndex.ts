@@ -12,6 +12,11 @@ export interface MemoryIndexEntry {
 
 /**
  * In-memory cache for storing parsed memory files
+ *
+ * Feature 10, Story 1 & 5: Performance & Resource Efficiency
+ * - Uses Map for O(1) lookup performance with large collections
+ * - Stores only primary file content (no linked content for lazy loading)
+ * - Proper cleanup via clear() method to prevent memory leaks
  */
 export class MemoryIndex {
     private index: Map<string, MemoryIndexEntry>;

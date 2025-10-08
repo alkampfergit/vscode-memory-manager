@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { IFileWatcher } from './interfaces/IFileWatcher';
+import { Logger } from './Logger';
 
 /**
  * File watcher system for monitoring changes in the Memory folder
@@ -92,7 +93,7 @@ export class FileWatcherSystem implements IFileWatcher {
             try {
                 handler(uri);
             } catch (error) {
-                console.error(`Error in file create handler: ${error}`);
+                Logger.getInstance().error('Error in file create handler', error);
             }
         });
     }
@@ -105,7 +106,7 @@ export class FileWatcherSystem implements IFileWatcher {
             try {
                 handler(uri);
             } catch (error) {
-                console.error(`Error in file change handler: ${error}`);
+                Logger.getInstance().error('Error in file change handler', error);
             }
         });
     }
@@ -118,7 +119,7 @@ export class FileWatcherSystem implements IFileWatcher {
             try {
                 handler(uri);
             } catch (error) {
-                console.error(`Error in file delete handler: ${error}`);
+                Logger.getInstance().error('Error in file delete handler', error);
             }
         });
     }

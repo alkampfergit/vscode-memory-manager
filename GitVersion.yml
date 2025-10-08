@@ -1,0 +1,5 @@
+mode: ContinuousDeployment
+branches:
+  feature:
+    source-branches: ['develop']
+    increment: Patch
