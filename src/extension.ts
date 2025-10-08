@@ -62,6 +62,18 @@ export async function activate(context: vscode.ExtensionContext) {
     );
     inspectionCommands.registerCommands(context);
 
+    // Register manual refresh command
+    const refreshCommand = vscode.commands.registerCommand('memoryManager.refresh', async () => {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (workspaceFolder) {
+            const memoryPattern = new vscode.RelativePattern(workspaceFolder, 'Memory/**/*.md');
+            const memoryFiles = await vscode.workspace.findFiles(memoryPattern);
+            await memoryManager.initialSync(memoryFiles);
+            vscode.window.showInformationMessage(`Memory Manager: Refreshed ${memoryFiles.length} file(s)`);
+        }
+    });
+    context.subscriptions.push(refreshCommand);
+
     // Start watching memory files
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (workspaceFolder) {
@@ -90,53 +102,47 @@ export async function activate(context: vscode.ExtensionContext) {
                 // Track recent tags for completion suggestions
                 tags.forEach(tag => tagCompletionProvider.addRecentTag(tag));
 
-                // Get summary of matches for all tags
-                const summary = contentInjector.getMatchSummaryForTags(tags);
+                // Get summary of matches for all tags (including referenced files)
+                const summary = await contentInjector.getMatchSummaryForTagsWithReferences(tags);
 
                 if (summary.count === 0) {
                     stream.markdown(`No memory files found with tags: **${tags.join(', ')}**`);
                     return {};
                 }
 
-                // Get all matching memory file paths
+                // Get all matching memory file paths (including references)
                 const filePaths = summary.filePaths;
 
                 // Notify user about found files
                 stream.markdown(`✅ Found ${filePaths.length} memory file(s) matching tags **${tags.join(', ')}**\n\n`);
+                // dump all file names
+                filePaths.forEach(path => {
+                    const fileName = path.split(/[/\\]/).pop() || path;
+                    stream.markdown(`- ${fileName}\n`);
+                });
+                stream.markdown('\n');
 
                 // Phase 2: Process the user's actual prompt (everything except first line)
                 if (remainingPrompt) {
-                    // Read memory file contents and strip YAML headers
-                    stream.markdown('📖 Reading memory files...\n\n');
 
-                    const memoryContents = await contentInjector.getMemoryContents(filePaths);
-
-                    if (memoryContents.length === 0) {
-                        stream.markdown('⚠️ Could not read any memory files.\n');
-                        return {};
+                    for (const filePath of filePaths) {
+                        const fileUri = vscode.Uri.file(filePath);
+                        stream.reference(fileUri);
                     }
-
-                    // Build the query with memory content included directly
-                    let queryWithMemories = '**Context from Memory Files:**\n\n';
-
-                    for (const memory of memoryContents) {
-                        const fileName = memory.filePath.split(/[/\\]/).pop() || memory.filePath;
-                        queryWithMemories += `### ${memory.title} (${fileName})\n\n`;
-                        queryWithMemories += `${memory.content}\n\n`;
-                        queryWithMemories += '---\n\n';
-                    }
-
-                    queryWithMemories += `**User Question:**\n\n${remainingPrompt}`;
-
-                    // Open chat with the query containing memory contents
-                    stream.markdown('🚀 Opening chat with memory context...\n\n');
 
                     setTimeout(async () => {
                         try {
+                            const fileUris = filePaths.map(path => vscode.Uri.file(path));
+
+                            // Then open chat with the user's question
                             await vscode.commands.executeCommand(
                                 'workbench.action.chat.open',
-                                queryWithMemories
+                                {
+                                    query: remainingPrompt,
+                                    attachFiles: fileUris
+                                }
                             );
+
                         } catch (error) {
                             Logger.getInstance().error('Failed to open chat', error);
                         }

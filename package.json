@@ -1,7 +1,7 @@
 {
   "name": "vscode-memory-manager",
   "displayName": "Memory Manager",
-  "version": "0.0.2-feature5.1+15",
+  "version": "0.0.2-better-attach.1+27",
   "description": "Manage and inject contextual knowledge into GitHub Copilot Chat using hierarchical tags",
   "publisher": "memory-manager",
   "engines": {
@@ -43,6 +43,11 @@
       {
         "command": "memory-manager.rebuildMemoryIndex",
         "title": "Memory Manager: Rebuild Memory Index",
+        "category": "Memory Manager"
+      },
+      {
+        "command": "memoryManager.refresh",
+        "title": "Memory Manager: Refresh Memory Files",
         "category": "Memory Manager"
       }
     ]
